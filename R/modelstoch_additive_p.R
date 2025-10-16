@@ -94,6 +94,7 @@
 #'                U = 1,
 #'                solver = c("alabama", "cccp", "cccp2", "slsqp"),
 #'                give_X = TRUE,
+#'                n_attempts_max = 5,
 #'                returnqp = FALSE,
 #'                ...)
 #'
@@ -124,6 +125,8 @@
 #' @param give_X Logical. If it is \code{TRUE}, it uses an initial vector (given by
 #' the evaluated DMU) for the solver, except for "cccp". If it is \code{FALSE}, the initial vector is given
 #' internally by the solver and it is usually randomly generated.
+#' @param n_attempts_max A value with the maximum number of attempts if the solver
+#' does not converge. Each attempt uses a different initial vector.
 #' @param returnqp Logical. If it is \code{TRUE}, it returns the quadratic problems
 #' (objective function and constraints).
 #' @param ... Other parameters, like the initial vector \code{X}, to be passed to the solver.
@@ -179,6 +182,7 @@ modelstoch_additive_p <-
            U = 1,
            solver = c("alabama", "cccp", "cccp2", "slsqp"),
            give_X = TRUE,
+           n_attempts_max = 5,
            returnqp = FALSE,
            ...) {
 
@@ -448,16 +452,27 @@ modelstoch_additive_p <-
 
       } else {
 
-        # Initial vector
-        if ((ii %in% dmu_ref) && give_X) {
-          Xini <- rep(0, ndr + ni + no + 1)
-          Xini[which(dmu_ref == ii)] <- 1
-          names(Xini) <- namevar
-        } else {
-          Xini <- NULL
-        }
+        n_attempts <- 1
 
-        res <- solvecop(op = mycop, solver = solver, quiet = TRUE, X = Xini, ...)
+        while (n_attempts <= n_attempts_max) {
+
+          # Initial vector
+          if ((n_attempts == 1) && give_X && (ii %in% dmu_ref)) {
+            Xini <- rep(0, ndr + ni + no + 1)
+            Xini[which(dmu_ref == ii)] <- 1
+            names(Xini) <- namevar
+          } else {
+            Xini <- NULL
+          }
+
+          res <- solvecop(op = mycop, solver = solver, quiet = TRUE, X = Xini, ...)
+
+          if (res$status == "successful convergence") {
+            n_attempts <- n_attempts_max
+          }
+          n_attempts <- n_attempts + 1
+
+        }
 
         if (res$status == "successful convergence") {
 

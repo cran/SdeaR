@@ -1,7 +1,7 @@
 Package: SdeaR
 Type: Package
 Title: Stochastic Data Envelopment Analysis
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: c(person(given = "Vicente",
                       family = "Bolós",
                       role = c("aut", "cre"),
@@ -23,9 +23,9 @@ RoxygenNote: 7.3.2
 Depends: R (>= 3.5)
 Imports: optiSolve, deaR
 NeedsCompilation: no
-Packaged: 2025-09-09 15:23:51 UTC; Vicente
+Packaged: 2025-10-16 09:20:58 UTC; Vicente
 Author: Vicente Bolós [aut, cre],
   Vicente Coll-Serrano [aut],
   Rafael Benítez Suárez [aut]
 Repository: CRAN
-Date/Publication: 2025-09-14 16:10:08 UTC
+Date/Publication: 2025-10-16 09:50:01 UTC

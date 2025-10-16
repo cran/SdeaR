@@ -15,6 +15,7 @@ modelstoch_addsupereff(datadea,
                L = 1,
                U = 1,
                solver = c("alabama", "cccp", "cccp2", "slsqp"),
+               n_attempts_max = 5,
                compute_target = TRUE,
                returnqp = FALSE,
                ...)
@@ -59,6 +60,9 @@ If \code{weight_slack_o} is the matrix of the inverses of outputs of DMUS in
 
 \item{solver}{Character string with the name of the solver used by function \code{solvecop}
 from package \code{optiSolve}.}
+
+\item{n_attempts_max}{A value with the maximum number of attempts if the solver
+does not converge. Each attempt uses a different initial vector.}
 
 \item{compute_target}{Logical. If it is \code{TRUE}, it computes targets,
 projections and slacks.}

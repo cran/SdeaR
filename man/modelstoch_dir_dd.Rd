@@ -15,7 +15,8 @@ modelstoch_dir_dd(datadea,
             U = 1,
             solver = c("alabama", "cccp", "cccp2", "slsqp"),
             give_X = TRUE,
-            maxslack = TRUE,
+            n_attempts_max = 5,
+            maxslack = FALSE,
             weight_slack_i = 1,
             weight_slack_o = 1,
             compute_target = TRUE,
@@ -62,6 +63,9 @@ from package \code{optiSolve}.}
 \item{give_X}{Logical. If it is \code{TRUE}, it uses an initial vector (given by
 the evaluated DMU) for the solver, except for "cccp". If it is \code{FALSE}, the initial vector is given
 internally by the solver and it is usually randomly generated.}
+
+\item{n_attempts_max}{A value with the maximum number of attempts if the solver
+does not converge. Each attempt uses a different initial vector.}
 
 \item{maxslack}{Logical. If it is \code{TRUE}, it computes the max slack solution.}
 

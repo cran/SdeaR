@@ -92,7 +92,8 @@
 #'             U = 1,
 #'             solver = c("alabama", "cccp", "cccp2", "slsqp"),
 #'             give_X = TRUE,
-#'             maxslack = TRUE,
+#'             n_attempts_max = 5,
+#'             maxslack = FALSE,
 #'             weight_slack_i = 1,
 #'             weight_slack_o = 1,
 #'             compute_target = TRUE,
@@ -125,6 +126,8 @@
 #' @param give_X Logical. If it is \code{TRUE}, it uses an initial vector (given by
 #' the evaluated DMU) for the solver, except for "cccp". If it is \code{FALSE}, the initial vector is given
 #' internally by the solver and it is usually randomly generated.
+#' @param n_attempts_max A value with the maximum number of attempts if the solver
+#' does not converge. Each attempt uses a different initial vector.
 #' @param maxslack Logical. If it is \code{TRUE}, it computes the max slack solution.
 #' @param weight_slack_i A value, vector of length \code{m}, or matrix \code{m} x \code{ne}
 #' (where \code{ne} is the length of \code{dmu_eval}) with the weights of the input slacks
@@ -194,7 +197,8 @@ modelstoch_dir <-
            U = 1,
            solver = c("alabama", "cccp", "cccp2", "slsqp"),
            give_X = TRUE,
-           maxslack = TRUE,
+           n_attempts_max = 5,
+           maxslack = FALSE,
            weight_slack_i = 1,
            weight_slack_o = 1,
            compute_target = TRUE,
@@ -534,16 +538,27 @@ modelstoch_dir <-
 
       } else {
 
-        # Initial vector
-        if ((ii %in% dmu_ref) && give_X) {
-          Xini <- rep(0, ndr + ni + no + 1)
-          Xini[which(dmu_ref == ii) + 1] <- 1
-          names(Xini) <- namevar1
-        } else {
-          Xini <- NULL
-        }
+        n_attempts <- 1
 
-        res <- solvecop(op = mycop, solver = solver, quiet = TRUE, X = Xini, ...)
+        while (n_attempts <= n_attempts_max) {
+
+          # Initial vector
+          if ((n_attempts == 1) && give_X && (ii %in% dmu_ref)) {
+            Xini <- rep(0, ndr + ni + no + 1)
+            Xini[which(dmu_ref == ii) + 1] <- 1
+            names(Xini) <- namevar1
+          } else {
+            Xini <- NULL
+          }
+
+          res <- solvecop(op = mycop, solver = solver, quiet = TRUE, X = Xini, ...)
+
+          if (res$status == "successful convergence") {
+            n_attempts <- n_attempts_max
+          }
+          n_attempts <- n_attempts + 1
+
+        }
 
         if (res$status == "successful convergence") {
 
@@ -607,46 +622,75 @@ modelstoch_dir <-
             }
             mycop$qc <- qclist
 
-            # Initial vector
-            if (give_X) {
-              lambda <- res[2 : (ndr + 1)]
-              sigma_input <- res[(ndr + 2):(ndr + ni + 1)]
-              sigma_output <- res[(ndr + ni + 2):(ndr + ni + no + 1)]
-              target_input <- as.vector(inputref %*% lambda)
-              target_output <- as.vector(outputref %*% lambda)
-              slack_input <- input[, ii] * (1 - beta * d_input[, i]) - target_input + qa * sigma_input
-              slack_input[nc_inputs] <- 0
-              slack_input[nd_inputs] <- input[nd_inputs, ii] - target_input[nd_inputs] +
-                qa * sigma_input[nd_inputs]
-              slack_output <- -output[, ii] * (1 + beta * d_output[, i]) + target_output + qa * sigma_output
-              slack_output[nc_outputs] <- 0
-              slack_output[nd_outputs] <- -output[nd_outputs, ii] + target_output[nd_outputs] +
-                qa * sigma_output[nd_outputs]
-              Xini <- c(lambda, slack_input, slack_output, sigma_input, sigma_output)
-              names(Xini) <- namevar2
-            } else{
-              Xini <- NULL
+            n_attempts <- 1
+
+            while (n_attempts <= n_attempts_max) {
+
+              # Initial vector
+              if ((n_attempts == 1) && give_X) {
+                lambda <- res[2 : (ndr + 1)]
+                sigma_input <- res[(ndr + 2):(ndr + ni + 1)]
+                sigma_output <- res[(ndr + ni + 2):(ndr + ni + no + 1)]
+                target_input <- as.vector(inputref %*% lambda)
+                target_output <- as.vector(outputref %*% lambda)
+                slack_input <- input[, ii] * (1 - beta * d_input[, i]) - target_input + qa * sigma_input
+                slack_input[nc_inputs] <- 0
+                slack_input[nd_inputs] <- input[nd_inputs, ii] - target_input[nd_inputs] +
+                  qa * sigma_input[nd_inputs]
+                slack_output <- -output[, ii] * (1 + beta * d_output[, i]) + target_output + qa * sigma_output
+                slack_output[nc_outputs] <- 0
+                slack_output[nd_outputs] <- -output[nd_outputs, ii] + target_output[nd_outputs] +
+                  qa * sigma_output[nd_outputs]
+                Xini <- c(lambda, slack_input, slack_output, sigma_input, sigma_output)
+                names(Xini) <- namevar2
+              } else{
+                Xini <- NULL
+              }
+
+              res <- solvecop(mycop, solver = solver, quiet = TRUE, X = Xini, ...)
+
+              if (res$status == "successful convergence") {
+                n_attempts <- n_attempts_max
+              }
+              n_attempts <- n_attempts + 1
+
             }
 
-            res <- solvecop(mycop, solver = solver, quiet = TRUE, X = Xini, ...)$x
+            if (res$status == "successful convergence") {
 
-            lambda <- res[1 : ndr]
-            names(lambda) <- dmunames[dmu_ref]
+              res <- res$x
+              lambda <- res[1 : ndr]
+              names(lambda) <- dmunames[dmu_ref]
 
-            slack_input <- res[(ndr + 1) : (ndr + ni)]
-            names(slack_input) <- inputnames
-            slack_output <- res[(ndr + ni + 1) : (ndr + ni + no)]
-            names(slack_output) <- outputnames
-            sigma_input <- res[(ndr + ni + no + 1):(ndr + ni + no + ni)]
-            names(sigma_input) <- inputnames
-            sigma_output <- res[(ndr + 2 * ni + no + 1):(ndr + 2 * (ni + no))]
-            names(sigma_output) <- outputnames
+              slack_input <- res[(ndr + 1) : (ndr + ni)]
+              names(slack_input) <- inputnames
+              slack_output <- res[(ndr + ni + 1) : (ndr + ni + no)]
+              names(slack_output) <- outputnames
+              sigma_input <- res[(ndr + ni + no + 1):(ndr + ni + no + ni)]
+              names(sigma_input) <- inputnames
+              sigma_output <- res[(ndr + 2 * ni + no + 1):(ndr + 2 * (ni + no))]
+              names(sigma_output) <- outputnames
 
-            if (compute_target) {
-              target_input <- as.vector(inputref %*% lambda)
-              target_output <- as.vector(outputref %*% lambda)
-              names(target_input) <- inputnames
-              names(target_output) <- outputnames
+              if (compute_target) {
+                target_input <- as.vector(inputref %*% lambda)
+                target_output <- as.vector(outputref %*% lambda)
+                names(target_input) <- inputnames
+                names(target_output) <- outputnames
+              }
+
+            } else {
+
+              beta <- NA
+              lambda <- NA
+              slack_input <- NA
+              slack_output <- NA
+              sigma_input <- NA
+              sigma_output <- NA
+              if (compute_target) {
+                target_input <- NA
+                target_output <- NA
+              }
+
             }
 
           } else {

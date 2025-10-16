@@ -75,6 +75,7 @@
 #'                L = 1,
 #'                U = 1,
 #'                solver = c("alabama", "cccp", "cccp2", "slsqp"),
+#'                n_attempts_max = 5,
 #'                compute_target = TRUE,
 #'                returnqp = FALSE,
 #'                ...)
@@ -108,6 +109,8 @@
 #' @param U Upper bound for the generalized returns to scale (grs).
 #' @param solver Character string with the name of the solver used by function \code{solvecop}
 #' from package \code{optiSolve}.
+#' @param n_attempts_max A value with the maximum number of attempts if the solver
+#' does not converge. Each attempt uses a different initial vector.
 #' @param compute_target Logical. If it is \code{TRUE}, it computes targets,
 #' projections and slacks.
 #' @param returnqp Logical. If it is \code{TRUE}, it returns the quadratic
@@ -153,6 +156,7 @@ modelstoch_addsupereff <-
            L = 1,
            U = 1,
            solver = c("alabama", "cccp", "cccp2", "slsqp"),
+           n_attempts_max = 5,
            compute_target = TRUE,
            returnqp = FALSE,
            ...) {
@@ -427,7 +431,18 @@ modelstoch_addsupereff <-
 
       } else {
 
-        res <- solvecop(op = mycop, solver = solver, quiet = TRUE, ...)
+        n_attempts <- 1
+
+        while (n_attempts <= n_attempts_max) {
+
+          res <- solvecop(op = mycop, solver = solver, quiet = TRUE, ...)
+
+          if (res$status == "successful convergence") {
+            n_attempts <- n_attempts_max
+          }
+          n_attempts <- n_attempts + 1
+
+        }
 
         if (res$status == "successful convergence") {
 
