@@ -181,14 +181,13 @@ data_stoch2 <- make_deadata_stoch(datadea = data_example,
                                   cov_input = cov_input,
                                   cov_output = cov_output)
 
-# Example 2. Deterministic data with one stochastic input,
-# from El-Demerdash et al. (2013).
+# Example 2. Deterministic data with one stochastic input.
 library(deaR)
 dmunames <- c("A", "B", "C")
 nd <- length(dmunames) # Number of DMUs
-inputnames <- c("Professors", "Budget")
+inputnames <- c("Input_1", "Input_2")
 ni <- length(inputnames) # Number of Inputs
-outputnames <- c("Diplomas", "Bachelors", "Masters")
+outputnames <- c("Output_1", "Output_2", "Output_3")
 no <- length(outputnames) # Number of Outputs
 X <- matrix(c(5, 14, 8, 15, 7, 12),
             nrow = ni, ncol = nd, dimnames = list(inputnames, dmunames))
@@ -205,11 +204,24 @@ covX[2, 2, 2:3] <- c(1.5, 0.7)
 covX[2, 3, 3] <- 1.2
 # Alternatively (note that values below the diagonal are ignored).
 covX[2, , ] <- matrix(c(1.4, 0.9, 0.6, 0, 1.5, 0.7, 0, 0, 1.2),
+                      nrow = 3,
                       byrow = TRUE)
 datadea_stoch <- make_deadata_stoch(datadea,
                                     cov_input = covX)
 
-# Example 3. 5 random observations of 3 DMUs with 2 inputs and 2 outputs.
+# Example 3. Replication of Program Follow Through data in Land et al. (1993)
+library(deaR)
+data("PFT1981")
+# Selecting DMUs in Program Follow Through (PFT)
+PFT <- PFT1981[1:49, ]
+PFT <- make_deadata(PFT,
+                    inputs = 2:6,
+                    outputs = 7:9)
+c <- 0.5
+var_output <- matrix(c^2, nrow = 3, ncol = 49)
+PFT_stoch <- make_deadata_stoch(datadea = PFT, var_output = var_output)
+
+# Example 4. 5 random observations of 3 DMUs with 2 inputs and 2 outputs.
 library(deaR)
 # Generate random observations.
 input1 <- data.frame(I1D1 = rnorm(5, mean = sample(5:10, 1)),
@@ -249,9 +261,8 @@ Cooper, W.W.; Huang, Z.; Lelas, V.; Li, S.X.; Olesen, O.B. (1998). “Chance
 Constrained Programming Formulations for Stochastic Characterizations of
 Efficiency and Dominance in DEA", Journal of Productivity Analysis, 9, 53-79.
 
-El-Demerdash, B.E.; El-Khodary, I.A.; Tharwat, A.A. (2013). "Developing a Stochastic
-Input Oriented Data Envelopment Analysis (SIODEA) Model", International Journal
-of Advanced Computer Science and Applications, Vol.4, No. 4, 40-44.
+Land, K.C; Lovell, C.A.K.; Thore, S. (1993). "Chance-constrained data envelopment analysis",
+Managerial and Decision Economics, Vol. 14, No. 6, 541-554.
 }
 \author{
 \strong{Vicente Bolós} (\email{vicente.bolos@uv.es}).

@@ -184,7 +184,9 @@ var_output <- matrix(1, nrow = no, ncol = nd)
 data_stoch <- make_deadata_stoch(datadea = data_example,
                                  var_input = var_input,
                                  var_output = var_output)
-Collstochdirdd <- modelstoch_dir_dd(data_stoch)
+# Evaluate the sixth DMU
+Collstochdirdd <- modelstoch_dir_dd(data_stoch, dmu_eval = 6)
+efficiencies(Collstochdirdd)
 }
 
 }

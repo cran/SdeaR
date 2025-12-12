@@ -36,33 +36,6 @@ with respect to which it is evaluated.
 Radial super-efficiency chance constrained model under non constant
 (vrs, nirs, ndrs, grs) returns to scale can be unfeasible for certain DMUs.
 }
-\examples{
-\donttest{
-# Example 1.
-library(deaR)
-ni = 2
-no = 1
-datatext <- make_deadata(Textile, ni = 2, no = 1)
-nd <- length(datatext$dmunames)
-# Compute variances
-mean_i <- apply(datatext$input, MARGIN = 1, FUN = mean)
-mean_o <- mean(datatext$output)
-var_i1 <- sum((datatext$input[1, ] - mean_i[1]) ^ 2) / (nd - 1)
-var_i2 <- sum((datatext$input[2, ] - mean_i[2]) ^ 2) / (nd - 1)
-var_o <- sum((datatext$output - mean_o) ^ 2) / (nd - 1)
-var_input <- matrix(rep(c(var_i1, var_i2), nd),
-                    nrow = ni,
-                    ncol = nd)
-var_output <- matrix(var_o,
-                     nrow = no,
-                     ncol = nd)
-datatext_stoch <- make_deadata_stoch(datatext,
-                                     var_input = var_input,
-                                     var_output = var_output)
-res <- modelstoch_radial_supereff(datatext_stoch, orientation = "oo")
-}
-
-}
 \references{
 Cooper, W.W.; Deng, H.; Huang, Z.; Li, S.X. (2002). “Chance constrained programming
 approaches to technical efficiencies and inefficiencies in stochastic data envelopment

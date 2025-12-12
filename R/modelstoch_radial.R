@@ -157,9 +157,8 @@
 #' analysis", Journal of the Operational Research Society, 53:12, 1347-1356.
 #' \doi{10.1057/palgrave.jors.2601433}
 #'
-#' El-Demerdash, B.E.; El-Khodary, I.A.; Tharwat, A.A. (2013). "Developing a Stochastic
-#' Input Oriented Data Envelopment Analysis (SIODEA) Model", International Journal
-#' of Advanced Computer Science and Applications, Vol.4, No. 4, 40-44.
+#' Land, K.C; Lovell, C.A.K.; Thore, S. (1993). "Chance-constrained data envelopment analysis",
+#' Managerial and Decision Economics, Vol. 14, No. 6, 541-554.
 #'
 #' @examples
 #' \donttest{
@@ -177,16 +176,17 @@
 #' data_stoch <- make_deadata_stoch(datadea = data_example,
 #'                                  var_input = var_input,
 #'                                  var_output = var_output)
-#' Collstoch <- modelstoch_radial(data_stoch)
+#' # Evaluate the sixth DMU
+#' Collstoch <- modelstoch_radial(data_stoch, dmu_eval = 6)
+#' efficiencies(Collstoch)
 #'
 #' # Example 2. Deterministic data with one stochastic input.
-#' # Replication of results in El-Demerdash et al. (2013).
 #' library(deaR)
 #' dmunames <- c("A", "B", "C")
 #' nd <- length(dmunames) # Number of DMUs
-#' inputnames <- c("Professors", "Budget")
+#' inputnames <- c("Input_1", "Input_2")
 #' ni <- length(inputnames) # Number of Inputs
-#' outputnames <- c("Diplomas", "Bachelors", "Masters")
+#' outputnames <- c("Output_1", "Output_2", "Output_3")
 #' no <- length(outputnames) # Number of Outputs
 #' X <- matrix(c(5, 14, 8, 15, 7, 12),
 #'             nrow = ni, ncol = nd, dimnames = list(inputnames, dmunames))
@@ -203,11 +203,31 @@
 #' covX[2, 3, 3] <- 1.2
 #' # Alternatively (note that values below the diagonal are ignored).
 #' covX[2, , ] <- matrix(c(1.4, 0.9, 0.6, 0, 1.5, 0.7, 0, 0, 1.2),
+#'                       nrow = 3,
 #'                       byrow = TRUE)
 #' datadea_stoch <- make_deadata_stoch(datadea,
 #'                                     cov_input = covX)
-#' res <- modelstoch_radial(datadea_stoch, rts = "vrs")
+#' alpha <- 0.025
+#' res <- modelstoch_radial(datadea_stoch,
+#'                          alpha = alpha,
+#'                          rts = "vrs")
+#' efficiencies(res)
 #' }
+#'
+#' # Example 3. Replication of results in Land et al. (1993)
+#' library(deaR)
+#' data("PFT1981")
+#' # Selecting DMUs in Program Follow Through (PFT)
+#' PFT <- PFT1981[1:49, ]
+#' PFT <- make_deadata(PFT,
+#'                     inputs = 2:6,
+#'                     outputs = 7:9)
+#' c <- 0.5
+#' var_output <- matrix(c^2, nrow = 3, ncol = 49)
+#' PFT_stoch <- make_deadata_stoch(datadea = PFT, var_output = var_output)
+#' # Evaluate the second DMU
+#' res <- modelstoch_radial(PFT_stoch, dmu_eval = 2)
+#' efficiencies(res)
 #'
 #' @import optiSolve deaR stats
 #'
@@ -245,6 +265,7 @@ modelstoch_radial <-
     stop("Parameter alpha must be between 0 and 1.")
   }
   qa <- qnorm(alpha)
+  #qa <- qnorm(alpha / 2)
 
   # Checking orientation
   orientation <- tolower(orientation)

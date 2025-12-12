@@ -36,7 +36,8 @@ var_output <- matrix(1, nrow = no, ncol = nd)
 data_stoch <- make_deadata_stoch(datadea = data_example,
                                  var_input = var_input,
                                  var_output = var_output)
-Collstoch <- modelstoch_radial(data_stoch)
+# Evaluate the sixth DMU
+Collstoch <- modelstoch_radial(data_stoch, dmu_eval = 6)
 efficiencies(Collstoch)
 }
 

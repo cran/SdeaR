@@ -178,7 +178,9 @@
 #' data_stoch <- make_deadata_stoch(datadea = data_example,
 #'                                  var_input = var_input,
 #'                                  var_output = var_output)
-#' Collstochdir <- modelstoch_dir(data_stoch)
+#' # Evaluate the sixth DMU
+#' Collstochdir <- modelstoch_dir(data_stoch, dmu_eval = 6)
+#' efficiencies(Collstochdir)
 #' }
 #'
 #' @import optiSolve stats
